@@ -28,4 +28,4 @@ This extension inject a javascript that gives likes to every post available if i
 if you are not on the Anilist site and click the icon it will open a new Anilist tab**
 
 3. Third method :
-    1. Install the userscript version using [Tampermonkey](https://www.tampermonkey.net/) from **[here!](https://github.com/Makhloufbel/AnilistLiker/raw/main/AnilistLiker.userScript.js)**.
+    1. Install the userscript version using [Tampermonkey](https://www.tampermonkey.net/) from **[here!](https://github.com/Makhloufbel/AnilistLiker/raw/main/AnilistLiker.user.js)**.
