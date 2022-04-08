@@ -1,0 +1,29 @@
+﻿{
+    "name": "Anilist Liker",
+    "version": "0.2.3",
+    "description": "Allows users to quickly like posts on Anilist by Makhlouf",
+    "manifest_version": 3,
+    "action": {
+        "default_title": "Click to open Anilist",
+        "default_icon": {
+            "16": "icons/logo-16.png",
+            "32": "icons/logo-32.png"
+        }
+    },
+    "permissions": ["activeTab", "scripting"],
+    "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "js": ["Content.js"]
+        }
+    ],
+
+    "background": {
+        "service_worker": "background.js"
+    },
+    "icons": {
+        "48": "icons/logo-48.png",
+        "96": "icons/logo-96.png"
+    },
+    "host_permissions": ["https://*.anilist.co/*"]
+}
