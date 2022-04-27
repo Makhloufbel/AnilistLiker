@@ -560,12 +560,12 @@
     }
     function blacklistedarray(array) {
         let blacklist = getObj('blacklist');
-        console.log(blacklist);
+        //console.log(blacklist);
 
         if (!blacklist.includes(username)) {
             blacklist.push(username);
         }
-        console.log(blacklist);
+        //console.log(blacklist);
 
         let notBlacklisted = new Array();
         let isBlacklisted;
@@ -573,8 +573,7 @@
             isBlacklisted = false;
             for (let e of blacklist) {
                 if (
-                    c.closest('.wrap').getElementsByClassName('name')[0].href ==
-                    e
+                    c.closest('.wrap').getElementsByClassName('name')[0].href == e
                 ) {
                     isBlacklisted = true;
                     break;
@@ -587,9 +586,9 @@
         return notBlacklisted;
     }
     setTimeout(()=>{if( /(^https?:\/\/)?(www\.)?anilist.co\/user\/\w+/.test(window.location.href)){
-        console.log(window.location.href);
+        //console.log(window.location.href);
         window.onload = userProfileHandler();
-        console.log(window.location.href);
+        //console.log(window.location.href);
     }
                    },1500);
     const onMutate = function(mutationsList) {
