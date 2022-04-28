@@ -10,14 +10,13 @@
 // @charset      UTF-8
 // ==/UserScript==
 
-
-(function() {
-   'use strict';
-    const svgns = 'http://www.w3.org/2000/svg';
-    const BLACKLIST_BUTTON_CLASSNAMES = ['btn', 'btn-primary', 'mmd1'];
-    /******** CSS of buttons divs uls ... ect ********/
-    const css = [
-        `
+(function () {
+  "use strict";
+  const svgns = "http://www.w3.org/2000/svg";
+  const BLACKLIST_BUTTON_CLASSNAMES = ["btn", "btn-primary", "mmd1"];
+  /******** CSS of buttons divs uls ... ect ********/
+  const css = [
+    `
   .btn-primary {
       color: rgb(var(--color-text));
       background-color: rgb(var(--color-foreground-blue));
@@ -257,443 +256,432 @@
     border: none;
   }
 `,
-    ];
-    /*********** verify if logged in**********/
-    let userObject;
-    let whoAmI = '';
-    let whoAmIid = 0;
+  ];
+  /*********** verify if logged in**********/
+  let userObject;
+  let whoAmI = "";
+  let whoAmIid = 0;
+  try {
+    userObject = JSON.parse(localStorage.getItem("auth"));
+  } catch (err) {
+    console.warn("could not get userObject");
+  }
+  if (userObject) {
+    whoAmI = userObject.name;
+    whoAmIid = userObject.id;
+  } else {
     try {
-        userObject = JSON.parse(localStorage.getItem('auth'));
-    } catch (err) {
-        console.warn('could not get userObject');
+      whoAmI = document
+        .querySelector(".nav .links .link[href^='/user/']")
+        .href.match(/\/user\/(.*)\//)[1]; //looks at the navbar
+    } catch (e) {
+      console.warn("could not get username");
+      alert("Please login before to use this script!!!");
+      return;
     }
-    if (userObject) {
-        whoAmI = userObject.name;
-        whoAmIid = userObject.id;
+  }
+  /********* add CSS ********/
+  document.head.insertAdjacentHTML("beforeend", "<style>" + css + "</style>");
+
+  let username = String("https://anilist.co/user/" + whoAmI + "/");
+  //document.querySelector(".nav .links .link[href^='/user/']").href;
+
+  /********* functions to store data *********/
+  const setObj = function (key, obj) {
+    localStorage.setItem(key, JSON.stringify(obj));
+  };
+  const getObj = function (key) {
+    return JSON.parse(localStorage.getItem(key));
+  };
+
+  if (getObj("blacklist") === null || getObj("blacklist").length == 0) {
+    setObj("blacklist", [username]);
+  }
+  /****** the Main function *******/
+  (function main() {
+    let div = create(
+      "div",
+      "#myContainer",
+      false,
+      document.querySelector("#nav > div.wrap")
+    );
+    let blacklistbtn = create(
+      "button",
+      ["btn", "btn-primary", "mmd2", "btntop"],
+      "Show blacklist",
+      div
+    );
+    var likeAllbtn = create(
+      "button",
+      ["btn", "btn-primary", "mmd2", "btnbottom"],
+      "Like all posts",
+      div
+    );
+    blacklistbtn.onclick = () => {
+      POPUP();
+    };
+
+    likeAllbtn.onclick = () => {
+      likeBtnHandler();
+    };
+  })();
+  /******** Utilities functions *********/
+  function homePageHandler() {
+    let divs = document.querySelectorAll("div.details:not(.ided)");
+    for (let e of divs) {
+      createbtn(e);
+    }
+  }
+  function createbtn(e) {
+    if (e.closest(".wrap").getElementsByClassName("name")[0].href === username)
+      return;
+    addAttribute(e);
+    let btn = create(
+      "button",
+      ["btn", "btn-primary", "mmd1"],
+      String(e.getAttribute("data-status")) === "blacklisted"
+        ? "whitelist"
+        : "blacklist",
+      false,
+      "position : absolute;"
+    );
+    btn.onclick = () => {
+      switch (String(e.getAttribute("data-status"))) {
+        case "whitelisted":
+          blacklistbtn(e);
+          btn.remove();
+          addAttribute(e);
+          createbtn(e);
+          break;
+        case "blacklisted":
+          whitelistbtn(e);
+          btn.remove();
+          addAttribute(e);
+          createbtn(e);
+          break;
+      }
+      deleteAllBtn();
+    };
+    e.children[0].after(btn);
+    e.classList.add("ided");
+  }
+  function userProfileHandler() {
+    let div = document.querySelector(".name-wrapper");
+    createProfilebtn(div);
+  }
+  function createProfilebtn(e) {
+    if (String("https://anilist.co/user/" + e.innerText + "/") === username)
+      return;
+    addAttributeToProfile(e);
+    let btn = create(
+      "button",
+      ["nav-btn", "profile-btn"],
+      String(e.getAttribute("data-status")) === "blacklisted"
+        ? "whitelist"
+        : "blacklist",
+      false,
+      false
+    );
+    btn.onclick = () => {
+      switch (String(e.getAttribute("data-status"))) {
+        case "whitelisted":
+          blacklistbtn(e);
+          break;
+        case "blacklisted":
+          whitelistbtn(e);
+          break;
+        default:
+          console.log("Error");
+          break;
+      }
+      deleteAllBtn();
+      userProfileHandler(e);
+    };
+    e.after(btn);
+  }
+
+  function addAttributeToProfile(b) {
+    let blacklist = getObj("blacklist");
+    if (String("https://anilist.co/user/" + b.innerText + "/") == username)
+      return;
+
+    if (
+      blacklist.includes(String("https://anilist.co/user/" + b.innerText + "/"))
+    ) {
+      b.setAttribute("data-status", "blacklisted");
     } else {
-        try {
-            whoAmI = document
-                .querySelector(".nav .links .link[href^='/user/']")
-                .href.match(/\/user\/(.*)\//)[1]; //looks at the navbar
-        } catch (e) {
-            console.warn('could not get username');
-            alert('Please login before to use this script!!!');
-            return;
-        }
+      b.setAttribute("data-status", "whitelisted");
     }
-    /********* add CSS ********/
-    document.head.insertAdjacentHTML('beforeend', '<style>' + css + '</style>');
+  }
+  function deleteAllBtn() {
+    document.querySelectorAll("button.btn.btn-primary.mmd1").forEach((e) => {
+      e.remove();
+    });
+    document.querySelectorAll("div.details").forEach((e) => {
+      e.classList.remove("ided");
+    });
+    document.querySelectorAll(".profile-btn").forEach((e) => {
+      e.remove();
+    });
+  }
 
-    let username = String('https://anilist.co/user/' + whoAmI + '/');
-    //document.querySelector(".nav .links .link[href^='/user/']").href;
+  function POPUP() {
+    let blacklist = getObj("blacklist");
+    let box = createDisplayBox(
+      "width:600px;height:500px;top:100px;left:220px;",
+      "Blacklisted"
+    );
+    for (let e of blacklist) {
+      let listing = create(
+        "p",
+        "mackNewChapter",
+        false,
+        false,
+        "position:relative;"
+      );
+      create("a", ["link", "newTab"], getName(e), listing).href =
+        "/user/" + getName(e) + "/";
+      let listClose = create(
+        "span",
+        "mackDisplayBoxClose",
+        "✕",
+        listing,
+        "top:0 !important;"
+      );
+      listClose.onclick = function () {
+        whitelistbtn(listing);
+        listing.remove();
+        blacklist.filter((item) => item !== e);
+        deleteAllBtn();
+        userProfileHandler();
+      };
+      box.appendChild(listing);
+    }
+  }
 
-    /********* functions to store data *********/
-    const setObj = function (key, obj) {
-        localStorage.setItem(key, JSON.stringify(obj));
+  function addAttribute(b) {
+    let blacklist = getObj("blacklist");
+    if (b.firstChild.href == username) return;
+
+    if (blacklist.includes(b.firstChild.href)) {
+      b.setAttribute("data-status", "blacklisted");
+    } else {
+      b.setAttribute("data-status", "whitelisted");
+    }
+  }
+  /********* Create a DOMElement *********/
+  function create(HTMLtag, classes, text, appendLocation, cssText) {
+    let element = document.createElement(HTMLtag);
+    if (Array.isArray(classes)) {
+      element.classList.add(...classes);
+      if (classes.includes("newTab")) {
+        element.setAttribute("target", "_blank");
+      }
+    } else if (classes) {
+      if (classes[0] === "#") {
+        element.id = classes.substring(1);
+      } else {
+        element.classList.add(classes);
+        if (classes === "newTab") {
+          element.setAttribute("target", "_blank");
+        }
+      }
+    }
+    if (text || text === 0) {
+      element.innerText = text;
+    }
+    if (appendLocation && appendLocation.appendChild) {
+      appendLocation.appendChild(element);
+    }
+    if (cssText) {
+      element.style.cssText = cssText;
+    }
+    return element;
+  }
+  /********* Create hovering box *********/
+  function createDisplayBox(cssProperties, windowTitle) {
+    let displayBox = create(
+      "div",
+      "mackDisplayBox",
+      false,
+      document.querySelector("#app") ||
+        document.querySelector(".termsFeed") ||
+        document.body,
+      cssProperties
+    );
+    if (windowTitle) {
+      create("span", "mackDisplayBoxTitle", windowTitle, displayBox);
+    }
+    let mousePosition;
+    let offset = [0, 0];
+    let isDown = false;
+    let isDownResize = false;
+    let displayBoxClose = create(
+      "span",
+      "mackDisplayBoxClose",
+      "✕",
+      displayBox
+    );
+    displayBoxClose.onclick = function () {
+      displayBox.remove();
     };
-    const getObj = function (key) {
-        return JSON.parse(localStorage.getItem(key));
-    };
+    let resizePearl = create("span", "mackResizePearl", false, displayBox);
+    displayBox.addEventListener(
+      "mousedown",
+      function (e) {
+        if (!["P", "PRE"].includes(e.target.tagName)) {
+          //don't annoy people trying to copy-paste
+          isDown = true;
+          offset = [
+            displayBox.offsetLeft - e.clientX,
+            displayBox.offsetTop - e.clientY,
+          ];
+        }
+      },
+      true
+    );
+    resizePearl.addEventListener(
+      "mousedown",
+      function (event) {
+        event.stopPropagation();
+        event.preventDefault();
+        isDownResize = true;
+        offset = [displayBox.offsetLeft, displayBox.offsetTop];
+      },
+      true
+    );
+    document.addEventListener(
+      "mouseup",
+      function () {
+        isDown = false;
+        isDownResize = false;
+      },
+      true
+    );
+    document.addEventListener(
+      "mousemove",
+      function (event) {
+        if (isDownResize) {
+          mousePosition = {
+            x: event.clientX,
+            y: event.clientY,
+          };
+          displayBox.style.width = mousePosition.x - offset[0] + 5 + "px";
+          displayBox.style.height = mousePosition.y - offset[1] + 5 + "px";
+          return;
+        }
+        if (isDown) {
+          mousePosition = {
+            x: event.clientX,
+            y: event.clientY,
+          };
+          displayBox.style.left = mousePosition.x + offset[0] + "px";
+          displayBox.style.top = mousePosition.y + offset[1] + "px";
+        }
+      },
+      true
+    );
+    let innerSpace = create("div", "scrollableContent", false, displayBox);
+    return innerSpace;
+  }
 
-    if (getObj('blacklist') === null || getObj('blacklist').length == 0) {
-        setObj('blacklist', [username]);
-    }
-    /****** the Main function *******/
-    (function main() {
-        let div = create(
-            'div',
-            '#myContainer',
-            false,
-            document.querySelector('#nav > div.wrap')
-        );
-        let blacklistbtn = create(
-            'button',
-            ['btn', 'btn-primary', 'mmd2', 'btntop'],
-            'Show blacklist',
-            div
-        );
-        var likeAllbtn = create(
-            'button',
-            ['btn', 'btn-primary', 'mmd2', 'btnbottom'],
-            'Like all posts',
-            div
-        );
-        blacklistbtn.onclick = () => {
-            POPUP();
-        };
+  function getName(link) {
+    if (link === null) return;
+    return link.split("/")[4];
+  }
 
-        likeAllbtn.onclick = () => {
-            likeBtnHandler();
-        };
-    })();
-    /******** Utilities functions *********/
-    function homePageHandler() {
-        let divs = document.querySelectorAll('div.details:not(.ided)');
-        for (let e of divs) {
-            createbtn(e);
-        }
-    }
-    function createbtn(e) {
-        if (
-            e.closest('.wrap').getElementsByClassName('name')[0].href ===
-            username
-        )
-            return;
-        addAttribute(e);
-        let btn = create(
-            'button',
-            ['btn', 'btn-primary', 'mmd1'],
-            String(e.getAttribute('data-status')) === 'blacklisted'
-                ? 'whitelist'
-                : 'blacklist',
-            false,
-            'position : absolute;'
-        );
-        btn.onclick = () => {
-            switch (String(e.getAttribute('data-status'))) {
-                case 'whitelisted':
-                    blacklistbtn(e);
-                    btn.remove();
-                    addAttribute(e);
-                    createbtn(e);
-                    break;
-                case 'blacklisted':
-                    whitelistbtn(e);
-                    btn.remove();
-                    addAttribute(e);
-                    createbtn(e);
-                    break;
-            }
-            deleteAllBtn();
-        };
-        e.children[0].after(btn);
-        e.classList.add('ided');
-    }
-    function userProfileHandler() {
-        let div = document.querySelector('.name-wrapper');
-        createProfilebtn(div);
-    }
-    function createProfilebtn(e) {
-        if (String('https://anilist.co/user/' + e.innerText + '/') === username)
-            return;
-        addAttributeToProfile(e);
-        let btn = create(
-            'button',
-            ['nav-btn', 'profile-btn'],
-            String(e.getAttribute('data-status')) === 'blacklisted'
-                ? 'whitelist'
-                : 'blacklist',
-            false,
-            false
-        );
-        btn.onclick = () => {
-            switch (String(e.getAttribute('data-status'))) {
-                case 'whitelisted':
-                    blacklistbtn(e);
-                    break;
-                case 'blacklisted':
-                    whitelistbtn(e);
-                    break;
-                default:
-                    console.log('Error');
-                    break;
-            }
-            deleteAllBtn();
-            userProfileHandler(e);
-        };
-        e.after(btn);
-    }
+  function whitelistbtn(b) {
+    let blacklist = getObj("blacklist");
+    var value = String(
+      "https://anilist.co/user/" + b.children[0].innerText + "/"
+    );
+    var val = b.children[0].innerText;
 
-    function addAttributeToProfile(b) {
-        let blacklist = getObj('blacklist');
-        if (String('https://anilist.co/user/' + b.innerText + '/') == username)
-            return;
+    if (blacklist.includes(value)) {
+      blacklist.splice(blacklist.indexOf(value), 1);
+      blacklist = setObj("blacklist", blacklist);
+      //alert(val +' has been whitelisted !');
+      //console.log(blacklist);
+    } else {
+      //alert(val +' is not blacklisted !');
+    }
+  }
+  function blacklistbtn(b) {
+    let blacklist = getObj("blacklist");
+    var value = (value = String(
+      "https://anilist.co/user/" + b.children[0].innerText + "/"
+    ));
+    var val = b.children[0].innerText;
 
-        if (
-            blacklist.includes(
-                String('https://anilist.co/user/' + b.innerText + '/')
-            )
-        ) {
-            b.setAttribute('data-status', 'blacklisted');
-        } else {
-            b.setAttribute('data-status', 'whitelisted');
-        }
+    if (!blacklist.includes(value)) {
+      blacklist.push(value);
+      setObj("blacklist", blacklist);
+      // alert(val +' has been blacklisted !');
+      //console.log(blacklist);
+    } else {
+      // alert(val +' is already blacklisted !');
     }
-    function deleteAllBtn() {
-        document
-            .querySelectorAll('button.btn.btn-primary.mmd1')
-            .forEach((e) => {
-                e.remove();
-            });
-        document.querySelectorAll('div.details').forEach((e) => {
-            e.classList.remove('ided');
-        });
-        document.querySelectorAll('.profile-btn').forEach((e) => {
-            e.remove();
-        });
-    }
+  }
 
-    function POPUP() {
-        let blacklist = getObj('blacklist');
-        let box = createDisplayBox(
-            'width:600px;height:500px;top:100px;left:220px;',
-            'Blacklisted'
-        );
-        for (let e of blacklist) {
-            let listing = create(
-                'p',
-                'mackNewChapter',
-                false,
-                false,
-                'position:relative;'
-            );
-            create('a', ['link', 'newTab'], getName(e), listing).href =
-                '/user/' + getName(e) + '/';
-            let listClose = create(
-                'span',
-                'mackDisplayBoxClose',
-                '✕',
-                listing,
-                'top:0 !important;'
-            );
-            listClose.onclick = function () {
-                whitelistbtn(listing);
-                listing.remove();
-                blacklist.filter((item) => item !== e);
-                deleteAllBtn();
-                userProfileHandler();
-            };
-            box.appendChild(listing);
-        }
+  function eventFire(el, etype) {
+    if (el.fireEvent) {
+      el.fireEvent("on" + etype);
+    } else {
+      var evObj = document.createEvent("Events");
+      evObj.initEvent(etype, true, false);
+      el.dispatchEvent(evObj);
     }
+  }
 
-    function addAttribute(b) {
-        let blacklist = getObj('blacklist');
-        if (b.firstChild.href == username) return;
+  function likeBtnHandler() {
+    let likes = document.querySelectorAll(".button:not(.liked)");
+    let notBlacklisted = blacklistedarray(likes);
+    //console.log(likes, notBlacklisted);
+    for (let e of notBlacklisted) {
+      eventFire(e, "click");
+    }
+  }
 
-        if (blacklist.includes(b.firstChild.href)) {
-            b.setAttribute('data-status', 'blacklisted');
-        } else {
-            b.setAttribute('data-status', 'whitelisted');
-        }
+  function blacklistedarray(array) {
+    let blacklist = getObj("blacklist");
+    if (!blacklist.includes(username)) {
+      blacklist.push(username);
     }
-    /********* Create a DOMElement *********/
-    function create(HTMLtag, classes, text, appendLocation, cssText) {
-        let element = document.createElement(HTMLtag);
-        if (Array.isArray(classes)) {
-            element.classList.add(...classes);
-            if (classes.includes('newTab')) {
-                element.setAttribute('target', '_blank');
-            }
-        } else if (classes) {
-            if (classes[0] === '#') {
-                element.id = classes.substring(1);
-            } else {
-                element.classList.add(classes);
-                if (classes === 'newTab') {
-                    element.setAttribute('target', '_blank');
-                }
-            }
+    let notBlacklisted = new Array();
+    let isBlacklisted;
+    for (let c of array) {
+      isBlacklisted = false;
+      for (let e of blacklist) {
+        if (c.closest(".wrap").getElementsByClassName("name")[0].href == e) {
+          isBlacklisted = true;
+          break;
         }
-        if (text || text === 0) {
-            element.innerText = text;
-        }
-        if (appendLocation && appendLocation.appendChild) {
-            appendLocation.appendChild(element);
-        }
-        if (cssText) {
-            element.style.cssText = cssText;
-        }
-        return element;
+      }
+      if (isBlacklisted == false) {
+        notBlacklisted.push(c);
+      }
     }
-    /********* Create hovering box *********/
-    function createDisplayBox(cssProperties, windowTitle) {
-        let displayBox = create(
-            'div',
-            'mackDisplayBox',
-            false,
-            document.querySelector('#app') ||
-                document.querySelector('.termsFeed') ||
-                document.body,
-            cssProperties
-        );
-        if (windowTitle) {
-            create('span', 'mackDisplayBoxTitle', windowTitle, displayBox);
-        }
-        let mousePosition;
-        let offset = [0, 0];
-        let isDown = false;
-        let isDownResize = false;
-        let displayBoxClose = create(
-            'span',
-            'mackDisplayBoxClose',
-            '✕',
-            displayBox
-        );
-        displayBoxClose.onclick = function () {
-            displayBox.remove();
-        };
-        let resizePearl = create('span', 'mackResizePearl', false, displayBox);
-        displayBox.addEventListener(
-            'mousedown',
-            function (e) {
-                if (!['P', 'PRE'].includes(e.target.tagName)) {
-                    //don't annoy people trying to copy-paste
-                    isDown = true;
-                    offset = [
-                        displayBox.offsetLeft - e.clientX,
-                        displayBox.offsetTop - e.clientY,
-                    ];
-                }
-            },
-            true
-        );
-        resizePearl.addEventListener(
-            'mousedown',
-            function (event) {
-                event.stopPropagation();
-                event.preventDefault();
-                isDownResize = true;
-                offset = [displayBox.offsetLeft, displayBox.offsetTop];
-            },
-            true
-        );
-        document.addEventListener(
-            'mouseup',
-            function () {
-                isDown = false;
-                isDownResize = false;
-            },
-            true
-        );
-        document.addEventListener(
-            'mousemove',
-            function (event) {
-                if (isDownResize) {
-                    mousePosition = {
-                        x: event.clientX,
-                        y: event.clientY,
-                    };
-                    displayBox.style.width =
-                        mousePosition.x - offset[0] + 5 + 'px';
-                    displayBox.style.height =
-                        mousePosition.y - offset[1] + 5 + 'px';
-                    return;
-                }
-                if (isDown) {
-                    mousePosition = {
-                        x: event.clientX,
-                        y: event.clientY,
-                    };
-                    displayBox.style.left = mousePosition.x + offset[0] + 'px';
-                    displayBox.style.top = mousePosition.y + offset[1] + 'px';
-                }
-            },
-            true
-        );
-        let innerSpace = create('div', 'scrollableContent', false, displayBox);
-        return innerSpace;
-    }
+    return notBlacklisted;
+  }
+  function profileBtnHandler() {
+    let isAdded = document.querySelector("button.nav-btn.profile-btn");
+    //console.log([...isAdded].length);
+    if (isAdded !== null) return;
+    window.onload = userProfileHandler();
+  }
 
-    function getName(link) {
-        if (link === null) return;
-        return link.split('/')[4];
+  const onMutate = function (mutationsList) {
+    if (window.location.href == "https://anilist.co/home") {
+      homePageHandler();
     }
-
-    function whitelistbtn(b) {
-        let blacklist = getObj('blacklist');
-        var value = String(
-            'https://anilist.co/user/' + b.children[0].innerText + '/'
-        );
-        var val = b.children[0].innerText;
-
-        if (blacklist.includes(value)) {
-            blacklist.splice(blacklist.indexOf(value), 1);
-            blacklist = setObj('blacklist', blacklist);
-            //alert(val +' has been whitelisted !');
-            //console.log(blacklist);
-        } else {
-            //alert(val +' is not blacklisted !');
-        }
+    if (
+      window.location.href.match(
+        /(^https?:\/\/)?(www\.)?anilist.co\/user\/\w+/gi
+      ) != null
+    ) {
+      profileBtnHandler();
     }
-    function blacklistbtn(b) {
-        let blacklist = getObj('blacklist');
-        var value = (value = String(
-            'https://anilist.co/user/' + b.children[0].innerText + '/'
-        ));
-        var val = b.children[0].innerText;
-
-        if (!blacklist.includes(value)) {
-            blacklist.push(value);
-            setObj('blacklist', blacklist);
-            // alert(val +' has been blacklisted !');
-            //console.log(blacklist);
-        } else {
-            // alert(val +' is already blacklisted !');
-        }
-    }
-
-    function eventFire(el, etype) {
-        if (el.fireEvent) {
-            el.fireEvent('on' + etype);
-        } else {
-            var evObj = document.createEvent('Events');
-            evObj.initEvent(etype, true, false);
-            el.dispatchEvent(evObj);
-        }
-    }
-
-    function likeBtnHandler() {
-        let likes = document.querySelectorAll('.button:not(.liked)');
-        let notBlacklisted = blacklistedarray(likes);
-        //console.log(likes, notBlacklisted);
-        for (let e of notBlacklisted) {
-            eventFire(e, 'click');
-        }
-    }
-
-    function blacklistedarray(array) {
-        let blacklist = getObj('blacklist');
-        if (!blacklist.includes(username)) {
-            blacklist.push(username);
-        }
-        let notBlacklisted = new Array();
-        let isBlacklisted;
-        for (let c of array) {
-            isBlacklisted = false;
-            for (let e of blacklist) {
-                if (
-                    c.closest('.wrap').getElementsByClassName('name')[0].href ==
-                    e
-                ) {
-                    isBlacklisted = true;
-                    break;
-                }
-            }
-            if (isBlacklisted == false) {
-                notBlacklisted.push(c);
-            }
-        }
-        return notBlacklisted;
-    }
-    function profileBtnHandler() {
-        let isAdded = document.querySelector('button.nav-btn.profile-btn');
-        //console.log([...isAdded].length);
-        if (isAdded !== null) return;
-        window.onload = userProfileHandler();
-    }
-
-    const onMutate = function (mutationsList) {
-        if (window.location.href == 'https://anilist.co/home') {
-            homePageHandler();
-        }
-        if (
-                window.location.href.match(/(^https?:\/\/)?(www\.)?anilist.co\/user\/\w+/gi)!= null
-            )
-        {
-            profileBtnHandler();
-        }
-    };
-    const observer = new MutationObserver(onMutate);
-    observer.observe(document.body, { childList: true, subtree: true });
+  };
+  const observer = new MutationObserver(onMutate);
+  observer.observe(document.body, { childList: true, subtree: true });
 })();
