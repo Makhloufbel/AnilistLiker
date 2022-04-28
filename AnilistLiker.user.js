@@ -164,11 +164,11 @@
             ::-webkit-scrollbar-thumb {
                 background-color: rgb(var(--color-blue));
             }
-            #myContainer{
-                position: absolute;
+            #myContainer {
+                position: fixed;
                 left: 5px;
                 align-items: center;
-                height: 100%;
+                height: 7rem;
                 width: 100px;
             }
 
