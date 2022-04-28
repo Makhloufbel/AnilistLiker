@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Anilist
+// @name         Anilist term
 // @namespace    https://github.com/Makhloufbel/AnilistLiker
 // @homepage     https://github.com/Makhloufbel
-// @version      0.3.7a
+// @version      0.3.8a
 // @description  Allows users to quickly like posts on Anilist just by one click ,this version allow you to blacklist  or whitelist any user for ease of use. Benitrom special  version ,"like all button" won't target TextStatus post
 // @author       Makhloufbel
 // @match        https://anilist.co/*
@@ -164,11 +164,13 @@
                 background-color: rgb(var(--color-blue));
             }
             #myContainer{
-                position: absolute;
-                left: 5px;
+                position: fixed;
+                left: .5rem;
                 align-items: center;
-                height: 100%;
+                height: 4rem;
                 width: 100px;
+                top:.5rem;
+                z-index:999;
             }
 
 .mmd2{
@@ -284,7 +286,7 @@
 
     //console.log(getObj('blacklist'));
     function main() {
-        let div = create('div','#myContainer',false,document.querySelector("#nav > div.wrap"))
+        let div = create('div','#myContainer',false,document.querySelector("body"))
         let blacklistbtn =create('button',['btn','btn-primary','mmd2','btntop'],'Show blacklist',div)
         var likeAllbtn = create('button',['btn','btn-primary','mmd2','btnbottom'],'Like all posts',div)
         blacklistbtn.onclick = () => {POPUP()}
@@ -550,7 +552,7 @@
         }
     }
     function likeBtnHandler() {
-        let likes = document.querySelectorAll('.button:not(.liked)');
+        let likes = document.querySelectorAll('.action.hohLikes:not(.hohILikeThis)');
 
         let notBlacklisted = blacklistedarray(likes);
         //console.log(likes, notBlacklisted);
@@ -575,7 +577,7 @@
             isBlacklisted = false;
             for (let e of blacklist) {
                 if (
-                    c.closest('.wrap').getElementsByClassName('name')[0].href == e || c.closest('.wrap').firstChild.classList[0]=='text'
+                    c.closest('.activity').querySelector(".link").href == e || c.closest('.activity').classList[1]=='text'
                 ) {
                     isBlacklisted = true;
                     break;
@@ -594,10 +596,12 @@
     }
                    },1500);
     const onMutate = function(mutationsList) {
-        if(window.location.href=='https://anilist.co/home'){
+        if(window.location.href.match(/(^https?:\/\/)?(www\.)?anilist.co\/terms(\?\w+=\w)?/gi)!= null){
+            console.log('terms');
             homePageHandler();
         };
     };
+    console.log(window.location.href);
     const observer = new MutationObserver(onMutate);
     observer.observe(document.body , {childList: true, subtree: true});
 })();
