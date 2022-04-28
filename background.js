@@ -156,13 +156,13 @@ function Static_Main() {
           ::-webkit-scrollbar-thumb {
               background-color: rgb(var(--color-blue));
           }
-          #myContainer{
-              position: absolute;
-              left: 5px;
-              align-items: center;
-              height: 100%;
-              width: 100px;
-          }
+            #myContainer {
+                position: fixed;
+                left: 5px;
+                align-items: center;
+                height: 7rem;
+                width: 100px;
+            }
 
 .mmd2{
       border: 2px solid rgb(var(--color-foreground-blue-dark));
