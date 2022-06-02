@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Anilist
+// @name         AnilistLiker
 // @namespace    https://github.com/Makhloufbel/AnilistLiker
 // @homepage     https://github.com/Makhloufbel
 // @version      0.3.7a
