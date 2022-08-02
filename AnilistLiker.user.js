@@ -2,7 +2,7 @@
 // @name         AnilistLiker
 // @namespace    https://github.com/Makhloufbel/AnilistLiker
 // @homepage     https://github.com/Makhloufbel
-// @version      0.3.8a
+// @version      0.3.8b
 // @description  Allows users to quickly like posts on Anilist just by one click ,this version allow you to blacklist  or whitelist any user for ease of use
 // @author       Makhloufbel
 // @match        https://anilist.co/*
