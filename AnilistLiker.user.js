@@ -14,7 +14,8 @@
     'use strict';
     const svgns = 'http://www.w3.org/2000/svg';
     const BLACKLIST_BUTTON_CLASSNAMES = ['btn', 'btn-primary', 'mmd1'];
-    const Max_likes = 50;
+    //the current allowed max likes per minute is 32
+    const Max_likes = 30;
     /******** CSS of buttons divs uls ... ect ********/
     const css = [
         `
