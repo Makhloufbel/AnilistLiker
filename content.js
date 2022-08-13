@@ -1,7 +1,6 @@
 if (window.location.href.includes('anilist.co')) {
     Static_Main();
 }
-
 function Static_Main() {
      'use strict';
     const svgns = 'http://www.w3.org/2000/svg';
