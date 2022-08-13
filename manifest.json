@@ -1,6 +1,6 @@
 ﻿{
   "name": "Anilist Liker",
-  "version": "0.3.6",
+  "version": "0.3.9a",
   "description": "Allows users to quickly like posts on Anilist by Makhlouf",
   "manifest_version": 3,
   "action": {
